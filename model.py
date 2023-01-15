@@ -59,26 +59,6 @@ def train(train_samples, train_lengths, convergence_threshold: float = 0.01, num
     return model
 
 
-def predict_fasta(model, fasta):
-    states = []
-    likelihoods = []
-    lengths = []
-
-    reader = fastaread_gz if is_gz_file(fasta) else fastaread
-    for _, seq in reader(fasta):
-        parsed_seq = np.array([[BASES_INDICES[c]] for c in seq])
-        seq_len = np.array([len(seq)])
-        ll, hidden_states = model.decode(parsed_seq, seq_len)
-        hidden_states = np.where(hidden_states >= 4, 'N', 'I')
-        states.append(hidden_states)
-        likelihoods.append(ll)
-        lengths.append(len(seq))
-
-    states = [''.join(s.astype(str)) for s in states]
-
-    return states, likelihoods, lengths
-
-
 def main():
     # Get train and test samples
     train_samples, train_lengths, test_samples, test_lengths, test_labels = split_train_test("DIR_PATH")
@@ -92,6 +72,7 @@ def main():
         ll, hidden_states = model.decode(sample, length)
         misclassification_error += np.count_nonzero(hidden_states - label)
     misclassification_error_rate = misclassification_error / np.sum(test_lengths)
+
 
 if __name__ == '__main__':
     main()
