@@ -12,7 +12,8 @@ AMINO_ACIDS = {"A": 0, "R": 1, "N": 2, "D": 3, "C": 4, "Q": 5, "E": 6, "G": 7, "
                "L": 10, "K": 11, "M": 12, "F": 13, "P": 14, "O": 15, "S": 16, "U": 17, "T": 18, "W": 19,
                "Y": 20, "V": 21, "B": 22, "Z": 23, "X": 24, "J": 25}
 BAD_AMINO_ACIDS = "OUBZXJ"
-EMISSIONS = np.recfromcsv("emissions-Table 1.csv")
+EMISSIONS = pd.read_csv("emissions-Table 1.csv", index_col=0).T.to_numpy()
+
 
 
 def split_train_test(dir_path: str):
