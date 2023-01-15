@@ -9,11 +9,11 @@ import numpy as np
 NUM_OF_STATS = 3
 STATES = {"H": 0, "S": 1, "L": 2}
 AMINO_ACIDS = {"A": 0, "R": 1, "N": 2, "D": 3, "C": 4, "Q": 5, "E": 6, "G": 7, "H": 8, "I": 9,
-               "L": 10, "K": 11, "M": 12, "F": 13, "P": 14, "O": 15, "S": 16, "U": 17, "T": 18, "W": 19,
-               "Y": 20, "V": 21, "B": 22, "Z": 23, "X": 24, "J": 25}
+               "L": 10, "K": 11, "M": 12, "F": 13, "P": 14, "S": 15, "T": 16, "W": 17,
+               "Y": 18, "V": 19, "B": 20, "Z": 21, "X": 22, "J": 23, "O": 24, "U": 25, }
 BAD_AMINO_ACIDS = "OUBZXJ"
-EMISSIONS = pd.read_csv("emissions-Table 1.csv", index_col=0).T.to_numpy()
-
+EMISSIONS = pd.read_csv("emissions-Table 1.csv", index_col=0).T.to_numpy() / 100
+TRANSITIONS = np.array([[12 / 13, 1 / 39, 2 / 39], [1 / 15, 4 / 5, 2 / 15], [0.4, 0.2, 0.4]])
 
 
 def split_train_test(dir_path: str):
@@ -21,7 +21,8 @@ def split_train_test(dir_path: str):
     test_samples, test_lengths, test_labels = [], [], []
 
     for file in os.listdir(dir_path):
-        flag = np.random.binomial(1, 0.8, 1)
+        flag = np.random.binomial(1, 0.5, 1)[0]
+        file = f"{dir_path}/{file}"
         with open(file, 'r') as f:
             content = f.readlines()
             seq, labels = content[0], content[1]
@@ -29,12 +30,12 @@ def split_train_test(dir_path: str):
             for s, l in zip(seq, labels):
                 if s not in BAD_AMINO_ACIDS:
                     numeric_seq += [AMINO_ACIDS[s]]
-                    numeric_labels += STATES[l]
+                    numeric_labels += [STATES[l]]
             if flag:
-                train_samples.append(numeric_seq)
+                train_samples.append(np.array(numeric_seq).reshape(-1, 1))
                 train_lengths.append(len(numeric_seq))
             else:
-                test_samples.append(numeric_seq)
+                test_samples.append(np.array(numeric_seq).reshape(-1, 1))
                 test_lengths.append(len(numeric_seq))
                 test_labels.append(numeric_labels)
 
@@ -48,20 +49,21 @@ def train(train_samples, train_lengths, convergence_threshold: float = 0.01, num
                                n_iter=num_iters,
                                tol=convergence_threshold,
                                verbose=True,
-                               params="e",
-                               init_params="st")
+                               params="et",
+                               init_params="s")
 
     # Config emissions
     model.emissionprob_ = EMISSIONS
+    model.transmat_ = TRANSITIONS
     # Train th model
-    model.fit(np.concat(train_samples).reshape((-1, 1)), train_lengths)
+    model.fit(np.concatenate(train_samples).reshape((-1, 1)), train_lengths)
 
     return model
 
 
 def main():
     # Get train and test samples
-    train_samples, train_lengths, test_samples, test_lengths, test_labels = split_train_test("DIR_PATH")
+    train_samples, train_lengths, test_samples, test_lengths, test_labels = split_train_test("data")
 
     # Create and train model
     model = train(train_samples, train_lengths)
