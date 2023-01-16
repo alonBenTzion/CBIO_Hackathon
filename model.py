@@ -13,9 +13,9 @@ AMINO_ACIDS = {"A": 0, "R": 1, "N": 2, "D": 3, "C": 4, "Q": 5, "E": 6, "G": 7, "
                "L": 10, "K": 11, "M": 12, "F": 13, "P": 14, "S": 15, "T": 16, "W": 17,
                "Y": 18, "V": 19, "B": 20, "Z": 21, "X": 22, "J": 23, "O": 24, "U": 25, }
 BAD_AMINO_ACIDS = "OUBZXJ"
-EMISSIONS = pd.read_csv("emissions-Table 1.csv", index_col=0).T.to_numpy() / 100
+EMISSIONS = pd.read_csv("emissions-Table_expressive.csv", index_col=0).T.to_numpy() / 100
 TRANSITIONS = np.array([[12 / 13, 1 / 39, 2 / 39], [1 / 15, 4 / 5, 2 / 15], [0.4, 0.2, 0.4]])
-PATH_TO_DATA = "/Users/alonbentzion/Downloads/parsed_sequences"  # Local
+PATH_TO_DATA = "parsed_sequences"  # Local
 
 
 def get_initial_transitions():
@@ -65,8 +65,8 @@ def train(train_samples, train_lengths, convergence_threshold: float = 0.01, num
                                n_iter=num_iters,
                                tol=convergence_threshold,
                                verbose=True,
-                               params="s",
-                               init_params="te")
+                               params="te",
+                               init_params="s")
 
     # Config emissions
     model.emissionprob_ = EMISSIONS
@@ -81,13 +81,21 @@ def train(train_samples, train_lengths, convergence_threshold: float = 0.01, num
 def main():
     # Get train and test samples
     train_samples, train_lengths, test_samples, test_lengths, test_labels = split_train_test(PATH_TO_DATA)
+    with open(f"models/train_samples_expresive", 'wb') as file:
+        pickle.dump(train_samples, file)
+
+    with open(f"models/train_lengths_expresive", 'wb') as file:
+        pickle.dump(train_lengths, file)
+
     with open(f"models/test_samples_expresive", 'wb') as file:
+        pickle.dump(train_lengths, file)
+
+    with open(f"models/test_lengths_expresive", 'wb') as file:
         pickle.dump(test_lengths, file)
 
     with open(f"models/test_labels_expresive", 'wb') as file:
         pickle.dump(test_labels, file)
 
-    errors_rate = []
     for iter in range(100, 101, 10):
         # Create and train model
         model = train(train_samples, train_lengths, num_iters=iter)
@@ -100,8 +108,7 @@ def main():
             misclassification_error += np.count_nonzero(hidden_states - label)
         # Save misclassification error
         misclassification_error_rate = misclassification_error / np.sum(test_lengths)
-        errors_rate.append(misclassification_error_rate)
-
+        print(f"Error rate: {misclassification_error_rate}")
         # Create pickle file
         with open(f"models/model_{iter}_expresive_2", 'wb') as file:
             pickle.dump(model, file)
