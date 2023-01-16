@@ -43,17 +43,21 @@ def read_pdb_dir(input_dir_name, output_dir_name) -> None:
     """
     Parses all pdb files in a given directory. for each pdb file, a file with the same name and extension ".txt"
     is created in the given output directory. Each created file contains two lines: the first line is the
-    amino acids sequence. The second line is the secondary structures (H, S, or L) for each residue (see read_pdb_file)
-    for explanation about the groups of secondary structures.
+    amino acids sequence. The second line is the secondary structures (H, S, or L) for each residue.
+    *See 'read_pdb_file' documentation for explanation about the groups of secondary structures.
     :param input_dir_name: path to directory from which to read the pdb files.
     :param output_dir_name: path to directory to write the output files.
     """
+    files_created = 0
     for file_name in os.listdir(input_dir_name):
         if file_name.endswith('.pdb'):
+            print(f"Starting file #{files_created+1}, file name: '{file_name}'")
             input_file_path = input_dir_name + "/" + file_name
             output_file_path = output_dir_name + "/" + file_name.split(".")[0] + ".txt"
             read_pdb_file(input_file_path, output_file_path)
-    print("Files created successfully")
+            files_created += 1
+            print(f"Finished file #{files_created}, file name: '{file_name}'")
+    print(f"\nFiles created successfully in directory: '{output_dir_name}'\nNumber of files created: {files_created}")
 
 
 if __name__ == '__main__':
